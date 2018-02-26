@@ -1,0 +1,1 @@
+# aws-ha-lamp-example

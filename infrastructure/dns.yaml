@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: DNS Configuration
+Parameters:
+  AppName:
+    Description: Name of the application.
+    MaxLength: 100
+    MinLength: 1
+    Type: String
+  Environment:
+    Description: Environment suffix for services, an empty string is assumed to be production
+    ConstraintDescription: Environment must be one of 'Dev' or 'Prod'
+    Default: 'Prod'
+    MinLength: 3
+    MaxLength: 4
+    Type: String
+    AllowedValues:
+      - 'Dev'
+      - 'Prod'
+  Domain:
+    AllowedPattern: ^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$
+    ConstraintDescription: Root domain name (i.e. example.com) for DNS, must be avalid name for a Route53 hosted zone, all other subdomains will be based on this.
+    Description: Domain name.
+    Type: String
+  WebsiteSubdomain:
+    Type: String
+    Default: "www"
+  StaticSubdomain:
+    Type: String
+    Default: "static"
+  HostedZoneID:
+    AllowedPattern: ^[A-Z0-9]+$
+    ConstraintDescription: Must be a valid HostedZoneID, typically in the format of ABCDEFG123456
+    Description: HostedZoneID either created by the Route53 Registrar (after registering a domain) or manually created
+    Type: String
+Mappings:
+  SubDomain:
+    Prod:
+      Suffix: ''
+    Dev:
+      Suffix: 'dev'
+  # AWS Hosted Zones are documented here by region and service: http://docs.aws.amazon.com/general/latest/gr/rande.html
+  AWSHostedZones:
+    us-east-1:
+      APIGateway: Z1UJRXOUMOOFQ8
+      CloudFront: Z2FDTNDATAQYW2
+Resources:
+  PublicDistribution:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneId: !Ref HostedZoneID
+      RecordSets:
+      - Name: !Sub ["${WebsiteSubdomain}${sub}.${Domain}", { sub: !FindInMap [SubDomain, !Ref Environment, 'Suffix'] }]
+        Type: A
+        AliasTarget:
+#          HostedZoneId: !FindInMap [AWSHostedZones, !Ref "AWS::Region", 'CloudFront']
+          HostedZoneId: !FindInMap [AWSHostedZones, "us-east-1", 'CloudFront']
+          DNSName:
+            Fn::ImportValue: !Sub "${AppName}${Environment}WebsiteDomain"
+      - Name: !Sub ["${StaticSubdomain}${sub}.${Domain}", { sub: !FindInMap [SubDomain, !Ref Environment, 'Suffix'] }]
+        Type: A
+        AliasTarget:
+#          HostedZoneId: !FindInMap [AWSHostedZones, !Ref "AWS::Region", 'CloudFront']
+          HostedZoneId: !FindInMap [AWSHostedZones, "us-east-1", 'CloudFront']
+          DNSName:
+            Fn::ImportValue: !Sub "${AppName}${Environment}StaticDomain"

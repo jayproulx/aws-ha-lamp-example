@@ -1,0 +1,26 @@
+[
+  {
+    "ParameterKey": "AppName",
+    "ParameterValue": "MyApplication"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "${environment}"
+  },
+  {
+    "ParameterKey": "DatabaseUsername",
+    "ParameterValue": "dbadmin"
+  },
+  {
+    "ParameterKey": "DatabasePassword",
+    "ParameterValue": "${databasePassword}"
+  },
+  {
+    "ParameterKey": "HostedZoneID",
+    "ParameterValue": "ABCD1234ABCD1234"
+  },
+  {
+    "ParameterKey": "Domain",
+    "ParameterValue": "example.com"
+  }
+]

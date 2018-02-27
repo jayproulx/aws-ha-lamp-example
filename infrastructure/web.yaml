@@ -1,0 +1,157 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create a high availability PHP website on AWS
+Parameters:
+  AppName:
+    Description: Name of the application.
+    MaxLength: 100
+    MinLength: 1
+    Type: String
+  Environment:
+    Description: Environment suffix for services
+    Default: 'Prod'
+    MinLength: 3
+    MaxLength: 4
+    Type: String
+    AllowedValues:
+      - 'Dev'
+      - 'Prod'
+  Domain:
+    AllowedPattern: ^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$
+    ConstraintDescription: Root domain name (i.e. example.com) for DNS, must be avalid name for a Route53 hosted zone, all other subdomains will be based on this.
+    Description: Domain name.
+    Type: String
+  WebsiteSubdomain:
+    Type: String
+    Default: "www"
+  StaticSubdomain:
+    Type: String
+    Default: "static"
+Mappings:
+  Region2S3WebsiteSuffix:
+    us-east-1:
+      Suffix: .s3-website-us-east-1.amazonaws.com
+    us-west-1:
+      Suffix: .s3-website-us-west-1.amazonaws.com
+    us-west-2:
+      Suffix: .s3-website-us-west-2.amazonaws.com
+    eu-west-1:
+      Suffix: .s3-website-eu-west-1.amazonaws.com
+    eu-west-2:
+      Suffix: .s3-website-eu-west-2.amazonaws.com
+    ap-northeast-1:
+      Suffix: .s3-website-ap-northeast-1.amazonaws.com
+    ap-northeast-2:
+      Suffix: .s3-website-ap-northeast-2.amazonaws.com
+    ap-southeast-1:
+      Suffix: .s3-website-ap-southeast-1.amazonaws.com
+    ap-southeast-2:
+      Suffix: .s3-website-ap-southeast-2.amazonaws.com
+    ap-south-1:
+      Suffix: .s3-website-ap-south-1.amazonaws.com
+    us-east-2:
+      Suffix: .s3-website-us-east-2.amazonaws.com
+    ca-central-1:
+      Suffix: .s3-website-ca-central-1.amazonaws.com
+    sa-east-1:
+      Suffix: .s3-website-sa-east-1.amazonaws.com
+    cn-north-1:
+      Suffix: .s3-website.cn-north-1.amazonaws.com.cn
+    eu-central-1:
+      Suffix: .s3-website-eu-central-1.amazonaws.com
+  SubDomain:
+    Prod:
+      Suffix: ''
+    Dev:
+      Suffix: 'dev'
+Resources:
+  LogsBucket:
+    Type: AWS::S3::Bucket
+  StaticResourcesCDNCertificate:
+    Type: "AWS::CertificateManager::Certificate"
+    DeletionPolicy: Retain
+    Properties:
+      DomainName: !Sub ['${StaticSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, 'Suffix']}]
+  StaticResources:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+  StaticOriginAccessIdentity:
+      Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+      Properties:
+        CloudFrontOriginAccessIdentityConfig:
+          Comment: Identity for StaticResourcesCDN
+  StaticResourcesCDN:
+    Type: AWS::CloudFront::Distribution
+    DependsOn: [StaticResources, LogsBucket, StaticResourcesCDNCertificate, StaticOriginAccessIdentity]
+    Properties:
+      DistributionConfig:
+        Comment: CDN for Static website assets
+        Logging:
+          Bucket: !GetAtt [LogsBucket, DomainName]
+          IncludeCookies: false
+          Prefix: StaticResourcesCDN
+        Enabled: 'true'
+        Aliases:
+          - !Sub ['${StaticSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, 'Suffix']}]
+        ViewerCertificate:
+          AcmCertificateArn: !Ref StaticResourcesCDNCertificate
+          SslSupportMethod: "sni-only"
+        DefaultCacheBehavior:
+          ViewerProtocolPolicy: redirect-to-https
+          TargetOriginId: static-resources
+          ForwardedValues:
+            QueryString: 'false'
+        DefaultRootObject: index.html
+        Origins:
+          - Id: static-resources
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${StaticOriginAccessIdentity}"
+            DomainName: !GetAtt [StaticResources, DomainName]
+  EBApplication:
+    Type: "AWS::ElasticBeanstalk::Application"
+    Properties:
+      ApplicationName: !Sub "${AppName}${Environment}App"
+      Description: "AWS Elastic Beanstalk PHP Sample Application"
+  EBConfigurationTemplate:
+    Type: "AWS::ElasticBeanstalk::ConfigurationTemplate"
+    DependsOn: [EBApplication]
+    Properties:
+      Description: !Sub "${AppName} ${Environment} Configuration Template"
+      ApplicationName: !Ref EBApplication
+#      EnvironmentId: !Ref EBEnvironment
+#      OptionSettings:
+#        - ConfigurationOptionSetting
+#      PlatformArn: String
+      SolutionStackName: "64bit Amazon Linux 2017.09 v2.6.5 running PHP 7.1"
+#      SourceConfiguration:
+#        SourceConfiguration
+  EBEnvironment:
+    Type: "AWS::ElasticBeanstalk::Environment"
+    DependsOn: [EBApplication, EBConfigurationTemplate]
+    Properties:
+      EnvironmentName: !Sub "${AppName}${Environment}Environment"
+      ApplicationName: !Ref EBApplication
+      TemplateName: !Ref EBConfigurationTemplate
+      Description: "AWS Elastic Beanstalk Environment"
+#      OptionSettings:
+#        - Namespace: String
+#          OptionName: String
+#          ResourceName: String
+#          Value: String
+#        - Namespace: String
+#          OptionName: String
+#          ResourceName: String
+#          Value: String
+Outputs:
+  WebsiteDomain:
+    Value: !Sub ['https://${WebsiteSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, 'Suffix']}]
+    Description: The domain of the website
+    Export:
+      Name: !Sub "${AppName}${Environment}WebsiteDomain"
+  StaticDomain:
+    Value: !Sub ['https://${StaticSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, 'Suffix']}]
+    Description: The domain of the static assets
+    Export:
+      Name: !Sub "${AppName}${Environment}StaticDomain"

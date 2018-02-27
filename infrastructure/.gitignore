@@ -1,0 +1,7 @@
+# environment files
+tokens.json
+parameters.json
+
+# Node and NPM
+node_modules
+package-lock.json

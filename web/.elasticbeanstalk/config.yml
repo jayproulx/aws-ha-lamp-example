@@ -1,0 +1,18 @@
+branch-defaults:
+  master:
+    environment: null
+    group_suffix: null
+global:
+  application_name: aws-ha-lamp-example
+  branch: master
+  default_ec2_keyname: Jay
+  default_platform: PHP 7.1
+  default_region: ca-central-1
+  include_git_submodules: true
+  instance_profile: null
+  platform_name: null
+  platform_version: null
+  profile: null
+  repository: aws-ha-lamp-example
+  sc: git
+  workspace_type: Application

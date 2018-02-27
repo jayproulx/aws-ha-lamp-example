@@ -1,0 +1,27 @@
+version: 0.2
+
+env:
+  variables:
+    ENVIRONMENT: "defined-by-cloudformation"
+    APP_NAME: "defined-by-cloudformation"
+    BUILD_DIR: .build
+
+phases:
+  install:
+    commands:
+      - npm --version
+      - npm install --silent -g typescript
+      - npm install --silent -g ts-node
+      - npm install --silent --prefix infrastructure
+  pre_build:
+    commands:
+      - node infrastructure/exports.js -o $BUILD_DIR/aws.json --environment $ENVIRONMENT --appName $APP_NAME
+  build:
+    commands:
+      - echo "Run EB deploy"
+#  post_build:
+#    commands:
+#artifacts:
+#  files:
+#    - public.zip
+#    - $BUILD_DIR

@@ -1,0 +1,30 @@
+{
+  "name": "infrastructure",
+  "version": "0.0.1",
+  "description": "AWS Infrastructure",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jayproulx/aws-ha-lamp-example.git"
+  },
+  "author": "Jason Proulx <jay@proulx.info>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jayproulx/aws-ha-lamp-example/issues"
+  },
+  "homepage": "https://github.com/jayproulx/aws-ha-lamp-example",
+  "devDependencies": {
+    "@types/node": "^8.0.50",
+    "@types/yargs": "^8.0.2"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.182.0",
+    "typescript": "^2.6.1",
+    "typescript-logging": "^0.5.0",
+    "yargs": "^9.0.1"
+  }
+}

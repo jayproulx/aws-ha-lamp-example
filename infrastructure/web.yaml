@@ -120,13 +120,7 @@ Resources:
     Properties:
       Description: !Sub "${AppName} ${Environment} Configuration Template"
       ApplicationName: !Ref EBApplication
-#      EnvironmentId: !Ref EBEnvironment
-#      OptionSettings:
-#        - ConfigurationOptionSetting
-#      PlatformArn: String
       SolutionStackName: "64bit Amazon Linux 2017.09 v2.6.5 running PHP 7.1"
-#      SourceConfiguration:
-#        SourceConfiguration
   EBEnvironment:
     Type: "AWS::ElasticBeanstalk::Environment"
     DependsOn: [EBApplication, EBConfigurationTemplate]
@@ -135,15 +129,6 @@ Resources:
       ApplicationName: !Ref EBApplication
       TemplateName: !Ref EBConfigurationTemplate
       Description: "AWS Elastic Beanstalk Environment"
-#      OptionSettings:
-#        - Namespace: String
-#          OptionName: String
-#          ResourceName: String
-#          Value: String
-#        - Namespace: String
-#          OptionName: String
-#          ResourceName: String
-#          Value: String
 Outputs:
   WebsiteDomain:
     Value: !Sub ['https://${WebsiteSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, 'Suffix']}]

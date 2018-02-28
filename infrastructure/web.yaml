@@ -15,17 +15,6 @@ Parameters:
     AllowedValues:
       - 'Dev'
       - 'Prod'
-  Domain:
-    AllowedPattern: ^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$
-    ConstraintDescription: Root domain name (i.e. example.com) for DNS, must be avalid name for a Route53 hosted zone, all other subdomains will be based on this.
-    Description: Domain name.
-    Type: String
-  WebsiteSubdomain:
-    Type: String
-    Default: "www"
-  StaticSubdomain:
-    Type: String
-    Default: "static"
 Mappings:
   Region2S3WebsiteSuffix:
     us-east-1:
@@ -66,11 +55,6 @@ Mappings:
 Resources:
   LogsBucket:
     Type: AWS::S3::Bucket
-  StaticResourcesCDNCertificate:
-    Type: "AWS::CertificateManager::Certificate"
-    DeletionPolicy: Retain
-    Properties:
-      DomainName: !Sub ['${StaticSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, 'Suffix']}]
   StaticResources:
     Type: AWS::S3::Bucket
     Properties:
@@ -84,7 +68,7 @@ Resources:
           Comment: Identity for StaticResourcesCDN
   StaticResourcesCDN:
     Type: AWS::CloudFront::Distribution
-    DependsOn: [StaticResources, LogsBucket, StaticResourcesCDNCertificate, StaticOriginAccessIdentity]
+    DependsOn: [StaticResources, LogsBucket, StaticOriginAccessIdentity]
     Properties:
       DistributionConfig:
         Comment: CDN for Static website assets
@@ -94,9 +78,10 @@ Resources:
           Prefix: StaticResourcesCDN
         Enabled: 'true'
         Aliases:
-          - !Sub ['${StaticSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, 'Suffix']}]
+          - Fn::ImportValue: !Sub "${AppName}${Environment}StaticDomain"
         ViewerCertificate:
-          AcmCertificateArn: !Ref StaticResourcesCDNCertificate
+          AcmCertificateArn:
+            Fn::ImportValue: !Sub "${AppName}${Environment}Certificate"
           SslSupportMethod: "sni-only"
         DefaultCacheBehavior:
           ViewerProtocolPolicy: redirect-to-https
@@ -129,14 +114,3 @@ Resources:
       ApplicationName: !Ref EBApplication
       TemplateName: !Ref EBConfigurationTemplate
       Description: "AWS Elastic Beanstalk Environment"
-Outputs:
-  WebsiteDomain:
-    Value: !Sub ['https://${WebsiteSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, 'Suffix']}]
-    Description: The domain of the website
-    Export:
-      Name: !Sub "${AppName}${Environment}WebsiteDomain"
-  StaticDomain:
-    Value: !Sub ['https://${StaticSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, 'Suffix']}]
-    Description: The domain of the static assets
-    Export:
-      Name: !Sub "${AppName}${Environment}StaticDomain"

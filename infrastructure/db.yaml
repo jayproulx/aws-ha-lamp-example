@@ -1,0 +1,369 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: "RDS cluster (NOTE: Enable Multi-AZ resources by adjusting the CreateProdResources condition below), commented out Aurora specific cluster functionality to make it easy to reinstate"
+Parameters:
+  AppName:
+    Description: Name of the application.
+    MaxLength: 100
+    MinLength: 1
+    Type: String
+  Environment:
+    Description: Environment suffix for services
+    ConstraintDescription: Environment must be one of 'Dev' or 'Prod'
+    Default: 'Prod'
+    MinLength: 3
+    MaxLength: 4
+    Type: String
+    AllowedValues:
+      - 'Dev'
+      - 'Prod'
+  DatabaseInstanceType:
+    Default: db.t2.micro
+    AllowedValues:
+      - db.t2.micro
+      - db.t2.small
+      - db.r3.large
+      - db.r3.xlarge
+      - db.r3.2xlarge
+      - db.r3.4xlarge
+      - db.r3.8xlarge
+    Description: The instance type to use for the database.
+    Type: String
+  DatabasePassword:
+    AllowedPattern: "[a-zA-Z0-9]+"
+    ConstraintDescription: must contain only alphanumeric characters.
+    Description: The database admin account password.
+    MaxLength: '41'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+  DatabaseUsername:
+    AllowedPattern: "[a-zA-Z0-9]+"
+    ConstraintDescription: must contain only alphanumeric characters.
+    Description: The database admin account user name.
+    MaxLength: '16'
+    MinLength: '1'
+    Type: String
+  DatabaseBackupRetentionPeriod:
+    Type: String
+    Default: 7
+    AllowedValues:
+      - 1
+      - 7
+    Description: The database backup retention period in days.
+Conditions:
+#  CreateProdResources: !Equals [!Ref Environment, 'Prod']
+  CreateProdResources: !Equals ['Disabled', 'Prod']
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Application configuration
+        Parameters:
+          - AppName
+          - Environment
+      - Label:
+          default: Database Configuration
+        Parameters:
+          - DatabaseInstanceType
+          - DatabaseUsername
+          - DatabasePassword
+          - DatabaseBackupRetentionPeriod
+    ParameterLabels:
+      DatabaseInstanceType:
+        default: Database Instance Type
+      DatabasePassword:
+        default: Database Password
+      DatabaseUsername:
+        default: Database Username
+      DatabaseBackupRetentionPeriod:
+        default: Database Backup Retention Period
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Application
+          Value: !Ref AppName
+        - Key: Name
+          Value: !Sub "${AppName} ${Environment} RDS VPC"
+  Subnet1:
+    Type: AWS::EC2::Subnet
+    DependsOn: [VPC]
+    Properties:
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      VpcId: !Ref 'VPC'
+      CidrBlock: 10.0.0.0/24
+      Tags:
+        - Key: Application
+          Value: !Ref AppName
+  Subnet2:
+    Type: AWS::EC2::Subnet
+    DependsOn: [VPC]
+    Properties:
+      AvailabilityZone: !Sub "${AWS::Region}c"
+      VpcId: !Ref 'VPC'
+      CidrBlock: 10.0.1.0/24
+      Tags:
+        - Key: Application
+          Value: !Ref AppName
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Application
+          Value: !Ref AppName
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref 'VPC'
+      InternetGatewayId: !Ref 'InternetGateway'
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref 'VPC'
+      Tags:
+        - Key: Application
+          Value: !Ref AppName
+        - Key: Environment
+          Value: !Ref Environment
+  Route:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref 'RouteTable'
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref 'InternetGateway'
+  Subnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref 'Subnet1'
+      RouteTableId: !Ref 'RouteTable'
+  Subnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref 'Subnet2'
+      RouteTableId: !Ref 'RouteTable'
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref 'VPC'
+      GroupDescription: Enable Database access via port 3306
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '3306'
+          ToPort: '3306'
+          CidrIp: 0.0.0.0/0
+  StackAlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Sub "${AppName} ${Environment} Database Stack Alarm Topic"
+  DatabaseSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    DependsOn: [Subnet1, Subnet2]
+    Properties:
+      DBSubnetGroupDescription: CloudFormation managed DB subnet group.
+      SubnetIds:
+        - !Ref Subnet1
+        - !Ref Subnet2
+#  DatabaseCluster:
+#    Type: AWS::RDS::DBCluster
+#    DependsOn: [DatabaseSubnetGroup, SecurityGroup]
+#    Properties:
+#      Engine: mysql
+#      AvailabilityZones: !If [ CreateProdResources, [ !Sub "${AWS::Region}a", !Sub "${AWS::Region}c" ], [ !Sub "${AWS::Region}a" ] ]
+#      MasterUsername: !Ref DatabaseUsername
+#      MasterUserPassword: !Ref DatabasePassword
+#      BackupRetentionPeriod: !Ref DatabaseBackupRetentionPeriod
+#      PreferredBackupWindow: 02:00-03:00
+#      PreferredMaintenanceWindow: mon:03:00-mon:04:00
+#      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+#      VpcSecurityGroupIds:
+#        - !Ref SecurityGroup
+#  DatabasePrimaryInstance:
+#    Type: AWS::RDS::DBInstance
+#    DependsOn: [DatabaseCluster, DatabaseSubnetGroup]
+#    Properties:
+#      Engine: aurora
+#      Engine: mysql
+#      PubliclyAccessible: true
+#      DBClusterIdentifier: !Ref DatabaseCluster
+#      DBInstanceClass: !Ref DatabaseInstanceType
+#      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+  DatabasePrimaryInstance:
+    Type: AWS::RDS::DBInstance
+    DependsOn: [DatabaseSubnetGroup]
+    Properties:
+      Engine: mysql
+      PubliclyAccessible: true
+      DBInstanceClass: !Ref DatabaseInstanceType
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+      AllocatedStorage: 5
+      MasterUsername: !Ref DatabaseUsername
+      MasterUserPassword: !Ref DatabasePassword
+#  DatabaseReplicaInstance:
+#    Type: AWS::RDS::DBInstance
+#    DependsOn: [DatabaseCluster, DatabaseSubnetGroup]
+#    Condition: CreateProdResources
+#    Properties:
+#      Engine: aurora
+#      DBClusterIdentifier: !Ref DatabaseCluster
+#      DBInstanceClass: !Ref DatabaseInstanceType
+#      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+  DatabasePrimaryCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    DependsOn: [StackAlarmTopic, DatabasePrimaryInstance]
+    Properties:
+      AlarmDescription: Primary database CPU utilization is over 80%.
+      Namespace: !Sub "${AppName} ${Environment} AWS/RDS"
+      MetricName: CPUUtilization
+      Unit: Percent
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref DatabasePrimaryInstance
+      AlarmActions:
+        - Ref: StackAlarmTopic
+      InsufficientDataActions:
+        - Ref: StackAlarmTopic
+#  DatabaseReplicaCPUAlarm:
+#    Type: AWS::CloudWatch::Alarm
+#    DependsOn: [StackAlarmTopic, DatabaseReplicaInstance]
+#    Condition: CreateProdResources
+#    Properties:
+#      AlarmDescription: Replica database CPU utilization is over 80%.
+#      Namespace: !Sub "${AppName} ${Environment} AWS/RDS"
+#      MetricName: CPUUtilization
+#      Unit: Percent
+#      Statistic: Average
+#      Period: 300
+#      EvaluationPeriods: 2
+#      Threshold: 80
+#      ComparisonOperator: GreaterThanOrEqualToThreshold
+#      Dimensions:
+#        - Name: DBInstanceIdentifier
+#          Value: !Ref DatabaseReplicaInstance
+#      AlarmActions:
+#        - Ref: StackAlarmTopic
+#      InsufficientDataActions:
+#        - Ref: StackAlarmTopic
+  DatabasePrimaryMemoryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    DependsOn: [StackAlarmTopic, DatabasePrimaryInstance]
+    Properties:
+      AlarmDescription: Primary database freeable memory is under 700MB.
+      Namespace: !Sub "${AppName} ${Environment} AWS/RDS"
+      MetricName: FreeableMemory
+      Unit: Bytes
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 700000000
+      ComparisonOperator: LessThanOrEqualToThreshold
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref DatabasePrimaryInstance
+      AlarmActions:
+        - Ref: StackAlarmTopic
+      InsufficientDataActions:
+        - Ref: StackAlarmTopic
+#  DatabaseReplicaMemoryAlarm:
+#    Type: AWS::CloudWatch::Alarm
+#    DependsOn: [StackAlarmTopic, DatabaseReplicaInstance]
+#    Condition: CreateProdResources
+#    Properties:
+#      AlarmDescription: Replica database freeable memory is under 700MB.
+#      Namespace: !Sub "${AppName} ${Environment} AWS/RDS"
+#      MetricName: FreeableMemory
+#      Unit: Bytes
+#      Statistic: Average
+#      Period: 300
+#      EvaluationPeriods: 2
+#      Threshold: 700000000
+#      ComparisonOperator: LessThanOrEqualToThreshold
+#      Dimensions:
+#        - Name: DBInstanceIdentifier
+#          Value: !Ref DatabaseReplicaInstance
+#      AlarmActions:
+#        - Ref: StackAlarmTopic
+#      InsufficientDataActions:
+#        - Ref: StackAlarmTopic
+#  DatabasePrimaryReplicationAlarm:
+#    Type: AWS::CloudWatch::Alarm
+#    DependsOn: [StackAlarmTopic, DatabasePrimaryInstance]
+#    Properties:
+#      AlarmDescription: Database replication latency is over 200ms.
+#      Namespace: !Sub "${AppName} ${Environment} AWS/RDS"
+#      MetricName: AuroraReplicaLag
+#      Unit: Milliseconds
+#      Statistic: Average
+#      Period: 300
+#      EvaluationPeriods: 2
+#      Threshold: 200
+#      ComparisonOperator: GreaterThanOrEqualToThreshold
+#      Dimensions:
+#        - Name: DBInstanceIdentifier
+#          Value: !Ref DatabasePrimaryInstance
+#      AlarmActions:
+#        - Ref: StackAlarmTopic
+#  DatabaseReplicaReplicationAlarm:
+#    Type: AWS::CloudWatch::Alarm
+#    DependsOn: [StackAlarmTopic, DatabaseReplicaInstance]
+#    Condition: CreateProdResources
+#    Properties:
+#      AlarmDescription: Database replication latency is over 200ms.
+#      Namespace: !Sub "${AppName} ${Environment} AWS/RDS"
+#      MetricName: AuroraReplicaLag
+#      Unit: Milliseconds
+#      Statistic: Average
+#      Period: 300
+#      EvaluationPeriods: 2
+#      Threshold: 200
+#      ComparisonOperator: GreaterThanOrEqualToThreshold
+#      Dimensions:
+#        - Name: DBInstanceIdentifier
+#          Value: !Ref DatabaseReplicaInstance
+#      AlarmActions:
+#        - Ref: StackAlarmTopic
+Outputs:
+  Endpoint:
+    Value: !GetAtt [DatabasePrimaryInstance, Endpoint.Address]
+    Description: The URL of the public website
+    Export:
+      Name: !Sub "${AWS::StackName}Endpoint"
+  Port:
+    Value: !GetAtt [DatabasePrimaryInstance, Endpoint.Port]
+    Description: The URL of the public website
+    Export:
+      Name: !Sub "${AWS::StackName}Port"
+  JDBC:
+    Value: !Sub ["jdbc:mysql://${host}:${port}", {host: !GetAtt [DatabasePrimaryInstance, Endpoint.Address], port: !GetAtt [DatabasePrimaryInstance, Endpoint.Port]}]
+    Export:
+      Name: !Sub "${AWS::StackName}JDBC"
+  SecurityGroup:
+    Value: !GetAtt [ SecurityGroup, GroupId ]
+    Export:
+      Name: !Sub "${AWS::StackName}SecurityGroup"
+  Subnet:
+    Value: !Ref Subnet1
+    Export:
+      Name: !Sub "${AWS::StackName}Subnet"
+  AvailabilityZone:
+    Value: !GetAtt [Subnet1, AvailabilityZone]
+    Export:
+      Name: !Sub "${AWS::StackName}AvailabilityZone"
+  VPC:
+    Value: !Ref VPC
+    Export:
+      Name: !Sub "${AWS::StackName}VPC"
+  RouteTable:
+    Value: !Ref RouteTable
+    Export:
+      Name: !Sub "${AWS::StackName}RouteTable"

@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Creates an ACM certificate for an environment and exports all of the relevant values for import in other stacks, ACM stack resources require manual approvals and should only be updated as necessary
+Parameters:
+  AppName:
+    Description: Name of the application.
+    MaxLength: 100
+    MinLength: 1
+    Type: String
+  Environment:
+    Description: Environment suffix for services
+    Default: 'Prod'
+    MinLength: 3
+    MaxLength: 4
+    Type: String
+    AllowedValues:
+      - 'Dev'
+      - 'Prod'
+  Domain:
+    AllowedPattern: ^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$
+    ConstraintDescription: Root domain name (i.e. example.com) for DNS, must be avalid name for a Route53 hosted zone, all other subdomains will be based on this.
+    Description: Domain name.
+    Type: String
+  WebsiteSubdomain:
+    Type: String
+    Default: "www"
+  StaticSubdomain:
+    Type: String
+    Default: "static"
+Mappings:
+  SubDomain:
+    Prod:
+      Suffix: ''
+    Dev:
+      Suffix: 'dev'
+Resources:
+  Certificate:
+    Type: "AWS::CertificateManager::Certificate"
+    DeletionPolicy: Retain
+    Properties:
+      DomainName: !Sub ['${WebsiteSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, Suffix]}]
+      SubjectAlternativeNames:
+        - !Sub ['${StaticSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, Suffix]}]
+Outputs:
+  Certificate:
+    Value: !Ref Certificate
+    Description: The certificate ARN
+    Export:
+      Name: !Sub "${AppName}${Environment}Certificate"
+  WebsiteDomain:
+    Value: !Sub ['${WebsiteSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, Suffix]}]
+    Description: The domain of the production website
+    Export:
+      Name: !Sub "${AppName}${Environment}WebsiteDomain"
+  StaticDomain:
+    Value: !Sub ['${StaticSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, Suffix]}]
+    Description: The domain of the production static assets
+    Export:
+      Name: !Sub "${AppName}${Environment}StaticDomain"

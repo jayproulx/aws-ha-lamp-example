@@ -19,8 +19,27 @@ You can register a domain with Route53 inexpensively for this example if you wis
 1. Create a parameters.json file from the provided example.parameters.json file, and configure the values for your needs
 1. Create a tokens.json file from the example, which will be used to conveniently store sensitive values for multiple deployments
 1. You can commit parameters.json in your own repository as you wish, don't commit the tokens.json file, and make sure to store those values somewhere secure (like 1password, or AWS SSM)
-1. Create the Web stack first, this will generate resources to fulfil the requirements as defined in ../README.md
+1. Create the ACM Stack, which will provision an SSL Certificate that you can use for different resources in this example
+1. Create the RDS Stack, which will provide database services for the web stack  
+1. Create the Web stack, this will generate a high availability Elastic Beanstalk application to deploy your code to
 1. Optionally, if you're using Route53, you can deploy the DNS stack to create A record aliases for the resources in the Web stack.
+
+## AWS Certificate Manager Stack
+
+```
+Manage the AWS Certificate Manager Stack.
+Usage: acm.ts
+
+Options:
+  --version          Show version number                               [boolean]
+  --parameters       Parameters file                [default: "parameters.json"]
+  -H, --help         Print usage and quit.                             [boolean]
+  -a, --action       CloudFormation action                   [default: "update"]
+  -s, --stackName    CloudFormation Stack Name                  [default: "ACM"]
+  -e, --environment  Environment to deploy stack to            [default: "Prod"]
+  -w, --wait         Wait for operations to complete before returning. [boolean]
+  -t, --template     CloudFormation template body          [default: "acm.yaml"]
+```
 
 ## Web Stack
 
@@ -61,5 +80,10 @@ Options:
 ```bash
 # npm install
 # echo "Make sure to edit your parameters.json and tokens.json files first"
+# echo "Make sure to manually approve the certificates that this stack creates"
+# ./acm.ts --action create
+# echo "Wait for the database stack to finish creating before proceeding to create the web stack"
+# ./db.ts --action create
+# echo "Once this stack is created, you can now use the Elastic Beanstalk CLI to deploy your application"
 # ./web.ts --action create
 ```

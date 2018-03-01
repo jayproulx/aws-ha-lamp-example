@@ -1,18 +1,20 @@
 branch-defaults:
-  master:
-    environment: null
-    group_suffix: null
+  default:
+    environment: HALAMPExampleProdEnvironment
+environment-defaults:
+  HALAMPExampleProdEnvironment:
+    branch: null
+    repository: null
 global:
-  application_name: aws-ha-lamp-example
-  branch: master
-  default_ec2_keyname: aws-ha-lamp-example
-  default_platform: PHP 7.1
+  application_name: HALAMPExampleProdApp
+  default_ec2_keyname: null
+  default_platform: arn:aws:elasticbeanstalk:us-east-1::platform/PHP 7.1 running on
+    64bit Amazon Linux/2.6.5
   default_region: us-east-1
   include_git_submodules: true
   instance_profile: null
   platform_name: null
   platform_version: null
   profile: null
-  repository: aws-ha-lamp-example
-  sc: git
+  sc: null
   workspace_type: Application

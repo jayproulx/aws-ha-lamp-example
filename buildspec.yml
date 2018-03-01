@@ -15,13 +15,10 @@ phases:
       - npm install --silent --prefix infrastructure
   pre_build:
     commands:
+      - mkdir .build
       - node infrastructure/exports.js -o $BUILD_DIR/aws.json --environment $ENVIRONMENT --appName $APP_NAME
   build:
     commands:
-      - echo "Run EB deploy"
+      - cd web; eb deploy
 #  post_build:
 #    commands:
-#artifacts:
-#  files:
-#    - public.zip
-#    - $BUILD_DIR

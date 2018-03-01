@@ -14,6 +14,7 @@
 - Default Elastic Beanstalk environment will provision t1.micro instances, suitable for free tier
 - CloudFront in front of static resources and application will lower latency for certain requests within TTL across geographies
 - CloudFront will additionally reduce load on resources  
+- RDS connection info is passed through cloudformation template parameters, ideally these should be stored in SSM
 
 ## instructions:
 
@@ -35,4 +36,5 @@
 - [ ] Ideally add additional ELB to EB environment in separate availability zone
 - [ ] Stretch goal: Add Elasticache and configure PHP for memcached cluster in 2 availability zones https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/customize-environment-resources-elasticache.html
 - [ ] Stretch goal: on EB startup add 2 RAID0 EBS volumes for higher disk I/O
-- [ ] Stretch goal: CodeBuild for CI/CD
+- [x] Stretch goal: CodeBuild for CI/CD
+- [ ] Stretch goal: RDS Parameters in SSM

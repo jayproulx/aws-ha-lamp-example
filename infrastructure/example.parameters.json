@@ -26,5 +26,21 @@
   {
     "ParameterKey": "CertificateArn",
     "ParameterValue": "arn:aws:acm:<REGION>:<ACCT_ID>:certificate/<CERT_ID>"
+  },
+  {
+    "ParameterKey": "RDSUsername",
+    "ParameterValue": "someusername"
+  },
+  {
+    "ParameterKey": "RDSPassword",
+    "ParameterValue": "somepassword"
+  },
+  {
+    "ParameterKey": "RDSHostname",
+    "ParameterValue": "somehostname"
+  },
+  {
+    "ParameterKey": "RDSDatabase",
+    "ParameterValue": "somedatabase"
   }
 ]

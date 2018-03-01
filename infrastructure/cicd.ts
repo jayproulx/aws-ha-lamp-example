@@ -2,8 +2,8 @@
 
 import {CloudFormationHelper} from "./lib/CloudFormationHelper";
 
-let yargs = require('yargs')
-        .usage('Manage the Web stack.\nUsage: $0')
+const yargs = require('yargs')
+        .usage('Manage the CI/CD Stack.\nUsage: $0')
         .alias('H', 'help')
         .describe('help', 'Print usage and quit.')
         .alias('a', 'action')
@@ -12,7 +12,7 @@ let yargs = require('yargs')
         .choices('action', ["create", "update", "delete", "recreate", "deploy", "createChangeSet", "executeChangeSet"])
         .alias('s', 'stackName')
         .describe('stackName', 'CloudFormation Stack Name')
-        .default('stackName', "Web")
+        .default('stackName', "CICD")
         .alias('e', 'environment')
         .describe('environment', 'Environment to deploy stack to')
         .choices('environment', ['Dev', 'Prod'])
@@ -24,7 +24,7 @@ let yargs = require('yargs')
         .default('parameters', `parameters.json`)
         .alias('t', 'template')
         .describe('template', 'CloudFormation template body')
-        .default('template', `web.yaml`),
+        .default('template', `cicd.yaml`),
     argv = yargs.argv;
 
 if (argv.H) {
@@ -39,10 +39,11 @@ let helper = new CloudFormationHelper({
     allowEmptyTokens: true,
     stripEmptyParameters: true,
     parametersFile: argv.parameters,
-    keys: ["AppName", "Environment", "CertificateArn", "RDSUsername", "RDSDatabase", "RDSPassword", "RDSHostname"],
+    keys: ["AppName", "Environment"],
     wait: argv.wait,
     parameterTokens: {
-        environment: argv.environment
+        environment: argv.environment,
+        branch: argv.environment == 'Prod' ? 'master' : 'develop'
     }
 });
 let parametersString = helper.cliParametersString();

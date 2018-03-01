@@ -19,6 +19,19 @@ Parameters:
   CertificateArn:
     Type: String
     Description: ACM Certificate to use for SSL for various resources in this stack
+  RDSUsername:
+    Type: String
+    Description: RDS Username
+  RDSPassword:
+    Type: String
+    Description: RDS Password
+    NoEcho: true
+  RDSHostname:
+    Type: String
+    Description: RDS Hostname
+  RDSDatabase:
+    Type: String
+    Description: RDS Database
 Mappings:
   Region2S3WebsiteSuffix:
     us-east-1:
@@ -117,6 +130,18 @@ Resources:
         - Namespace: "aws:elb:loadbalancer"
           OptionName: "CrossZone"
           Value: true
+        - Namespace: "aws:elasticbeanstalk:application:environment"
+          OptionName: "RDS_USERNAME"
+          Value: !Ref RDSUsername
+        - Namespace: "aws:elasticbeanstalk:application:environment"
+          OptionName: "RDS_PASSWORD"
+          Value: !Ref RDSPassword
+        - Namespace: "aws:elasticbeanstalk:application:environment"
+          OptionName: "RDS_HOSTNAME"
+          Value: !Ref RDSHostname
+        - Namespace: "aws:elasticbeanstalk:application:environment"
+          OptionName: "RDS_DB_NAME"
+          Value: !Ref RDSDatabase
 #        - Namespace: "aws:elb:listener:443"
 #          OptionName: "ListenerProtocol"
 #          Value: "HTTPS"
@@ -155,10 +180,15 @@ Resources:
             Fn::ImportValue: !Sub "${AppName}${Environment}ACMCertificate"
           SslSupportMethod: "sni-only"
         DefaultCacheBehavior:
+          AllowedMethods: [HEAD, DELETE, POST, GET, OPTIONS, PUT, PATCH]
           ViewerProtocolPolicy: redirect-to-https
           TargetOriginId: beanstalk-elb
           ForwardedValues:
-            QueryString: 'false'
+            QueryString: 'true'
+            Headers:
+              - "*"
+            Cookies:
+              Forward: all
         Origins:
           - Id: beanstalk-elb
             CustomOriginConfig:

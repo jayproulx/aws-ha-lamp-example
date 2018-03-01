@@ -23,6 +23,13 @@ You can register a domain with Route53 inexpensively for this example if you wis
 1. Create the RDS Stack, which will provide database services for the web stack  
 1. Create the Web stack, this will generate a high availability Elastic Beanstalk application to deploy your code to
 1. Optionally, if you're using Route53, you can deploy the DNS stack to create A record aliases for the resources in the Web stack.
+1. Optionally, if you'd like to deploy to elastic beanstalk automatically, install the CICD stack
+
+## Additional Notes
+
+1. The Database instances by default only allow access from a particular security group, which can be changed to a security group assigned to the Beanstalk instances
+1. To access the database from, for example, MySQL Workbench, update the security group ingress to allow access to 3306 from your IP address (or anywhere, inadvisedly)
+1. You'll need to manually create a database (and specify it in parameters.json) in the database instance 
 
 ## AWS Certificate Manager Stack
 

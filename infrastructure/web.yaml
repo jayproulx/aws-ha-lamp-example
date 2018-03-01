@@ -114,6 +114,9 @@ Resources:
         - Namespace: "aws:autoscaling:asg"
           OptionName: "MinSize"
           Value: 2
+        - Namespace: "aws:elb:loadbalancer"
+          OptionName: "CrossZone"
+          Value: true
 #        - Namespace: "aws:elb:listener:443"
 #          OptionName: "ListenerProtocol"
 #          Value: "HTTPS"

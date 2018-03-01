@@ -45,14 +45,14 @@ Outputs:
     Value: !Ref Certificate
     Description: The certificate ARN
     Export:
-      Name: !Sub "${AppName}${Environment}Certificate"
+      Name: !Sub "${AWS::StackName}Certificate"
   WebsiteDomain:
     Value: !Sub ['${WebsiteSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, Suffix]}]
     Description: The domain of the production website
     Export:
-      Name: !Sub "${AppName}${Environment}WebsiteDomain"
+      Name: !Sub "${AWS::StackName}WebsiteDomain"
   StaticDomain:
     Value: !Sub ['${StaticSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, Suffix]}]
     Description: The domain of the production static assets
     Export:
-      Name: !Sub "${AppName}${Environment}StaticDomain"
+      Name: !Sub "${AWS::StackName}StaticDomain"

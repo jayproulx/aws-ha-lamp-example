@@ -22,5 +22,9 @@
   {
     "ParameterKey": "Domain",
     "ParameterValue": "example.com"
+  },
+  {
+    "ParameterKey": "CertificateArn",
+    "ParameterValue": "arn:aws:acm:<REGION>:<ACCT_ID>:certificate/<CERT_ID>"
   }
 ]

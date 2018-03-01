@@ -7,7 +7,7 @@ and creation of the environment for this example.
 
 ## Before you start
 
-The Web stack will generate SSL certificates with AWS Certificate Manager, which will need to be approved by the
+The ACM stack will generate SSL certificates with AWS Certificate Manager, which will need to be approved by the
 technical contact associated with your domain, you can determine the technical contact with `whois`, or contact the 
 administrator for your domain. *The CloudFormation stack won't complete until the cert is approved*.
 

@@ -39,7 +39,7 @@ let helper = new CloudFormationHelper({
     allowEmptyTokens: true,
     stripEmptyParameters: true,
     parametersFile: argv.parameters,
-    keys: ["AppName", "ProjectId", "Environment", "Domain", "HostedZoneID", "WebsiteSubdomain", "StaticSubdomain"],
+    keys: ["AppName", "Environment", "HostedZoneID"],
     wait: argv.wait,
     parameterTokens: {
         environment: argv.environment

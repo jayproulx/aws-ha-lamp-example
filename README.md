@@ -27,11 +27,11 @@
 - [x] Document infrastructure with readme for all stack scripts and a description of standard functionality
 - [x] Add RDS MySQL master/replica to 2 availability zones (compromised to a master in 1 AZ to keep within free tier)
 - [x] Add CloudFront distribution in front of EB ELB, disable caching for demonstration of balancing (with HTTPS)
+- [x] Add minimum of 2 instances to Auto Scaling Group to demonstrate balancing
 - [ ] Configure Elastic Beanstalk for HTTPS: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/configuring-https.html
 - [ ] Cross zone load balancing is disabled by default for the Elastic Beanstalk ELB, and would need to be enabled
 - [ ] (Deprecated since we're sticking to a single AZ to stay within free tier) Restrict Elastic Beanstalk Auto Scaling Group to 2 specific availability zones to match with MySQL
 - [ ] Update PHP application to display current local IP or instance id to distinguish between instances in demo
-- [ ] Add minimum of 2 instances to Auto Scaling Group to demonstrate balancing
 - [ ] Ideally add additional ELB to EB environment in separate availability zone
 - [ ] Stretch goal: Add Elasticache and configure PHP for memcached cluster in 2 availability zones https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/customize-environment-resources-elasticache.html
 - [ ] Stretch goal: on EB startup add 2 RAID0 EBS volumes for higher disk I/O

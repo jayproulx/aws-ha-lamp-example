@@ -110,7 +110,10 @@ Resources:
       Description: !Sub "${AppName} ${Environment} Configuration Template"
       ApplicationName: !Ref BeanstalkApplication
       SolutionStackName: "64bit Amazon Linux 2017.09 v2.6.5 running PHP 7.1"
-#      OptionSettings:
+      OptionSettings:
+        - Namespace: "aws:autoscaling:asg"
+          OptionName: "MinSize"
+          Value: 2
 #        - Namespace: "aws:elb:listener:443"
 #          OptionName: "ListenerProtocol"
 #          Value: "HTTPS"

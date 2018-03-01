@@ -15,6 +15,10 @@ Parameters:
     AllowedValues:
       - 'Dev'
       - 'Prod'
+#  Todo: Bug here, Beanstalk OptionSettings won't accept an Fn::ImportValue: !Sub "key"
+  CertificateArn:
+    Type: String
+    Description: ACM Certificate to use for SSL for various resources in this stack
 Mappings:
   Region2S3WebsiteSuffix:
     us-east-1:
@@ -78,10 +82,10 @@ Resources:
           Prefix: StaticResourcesCDN
         Enabled: 'true'
         Aliases:
-          - Fn::ImportValue: !Sub "${AppName}${Environment}StaticDomain"
+          - Fn::ImportValue: !Sub "${AppName}${Environment}ACMStaticDomain"
         ViewerCertificate:
           AcmCertificateArn:
-            Fn::ImportValue: !Sub "${AppName}${Environment}Certificate"
+            Fn::ImportValue: !Sub "${AppName}${Environment}ACMCertificate"
           SslSupportMethod: "sni-only"
         DefaultCacheBehavior:
           ViewerProtocolPolicy: redirect-to-https
@@ -94,23 +98,78 @@ Resources:
             S3OriginConfig:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${StaticOriginAccessIdentity}"
             DomainName: !GetAtt [StaticResources, DomainName]
-  EBApplication:
+  BeanstalkApplication:
     Type: "AWS::ElasticBeanstalk::Application"
     Properties:
       ApplicationName: !Sub "${AppName}${Environment}App"
       Description: "AWS Elastic Beanstalk PHP Sample Application"
-  EBConfigurationTemplate:
+  BeanstalkConfigurationTemplate:
     Type: "AWS::ElasticBeanstalk::ConfigurationTemplate"
-    DependsOn: [EBApplication]
+    DependsOn: [BeanstalkApplication]
     Properties:
       Description: !Sub "${AppName} ${Environment} Configuration Template"
-      ApplicationName: !Ref EBApplication
+      ApplicationName: !Ref BeanstalkApplication
       SolutionStackName: "64bit Amazon Linux 2017.09 v2.6.5 running PHP 7.1"
-  EBEnvironment:
+#      OptionSettings:
+#        - Namespace: "aws:elb:listener:443"
+#          OptionName: "ListenerProtocol"
+#          Value: "HTTPS"
+#        - Namespace: "aws:elb:listener:443"
+#          OptionName: "SSLCertificateId"
+#          Value: !Ref CertificateArn
+##          Value:
+##            Fn::ImportValue: !Sub "${Application}${Environment}ACMCertificate"
+#        - Namespace: "aws:elb:listener:443"
+#          OptionName: "InstancePort"
+#          Value: "80"
+  BeanstalkEnvironment:
     Type: "AWS::ElasticBeanstalk::Environment"
-    DependsOn: [EBApplication, EBConfigurationTemplate]
+    DependsOn: [BeanstalkApplication, BeanstalkConfigurationTemplate]
     Properties:
       EnvironmentName: !Sub "${AppName}${Environment}Environment"
-      ApplicationName: !Ref EBApplication
-      TemplateName: !Ref EBConfigurationTemplate
+      ApplicationName: !Ref BeanstalkApplication
+      TemplateName: !Ref BeanstalkConfigurationTemplate
       Description: "AWS Elastic Beanstalk Environment"
+  BeanstalkCDN:
+    Type: AWS::CloudFront::Distribution
+    DependsOn: [BeanstalkEnvironment, LogsBucket]
+    Properties:
+      DistributionConfig:
+        Comment: CDN for Elastic Beanstalk ELB
+        DefaultRootObject: index.php
+        Logging:
+          Bucket: !GetAtt [LogsBucket, DomainName]
+          IncludeCookies: false
+          Prefix: WebsiteCDN
+        Enabled: 'true'
+        Aliases:
+          - Fn::ImportValue: !Sub "${AppName}${Environment}ACMWebsiteDomain"
+        ViewerCertificate:
+          AcmCertificateArn:
+            Fn::ImportValue: !Sub "${AppName}${Environment}ACMCertificate"
+          SslSupportMethod: "sni-only"
+        DefaultCacheBehavior:
+          ViewerProtocolPolicy: redirect-to-https
+          TargetOriginId: beanstalk-elb
+          ForwardedValues:
+            QueryString: 'false'
+        Origins:
+          - Id: beanstalk-elb
+            CustomOriginConfig:
+              HTTPPort: '80'
+              HTTPSPort: '443'
+              OriginProtocolPolicy: http-only
+            DomainName: !GetAtt [BeanstalkEnvironment, EndpointURL]
+Outputs:
+  BeanstalkEndpointURL:
+    Value: !GetAtt [BeanstalkEnvironment, EndpointURL]
+    Export:
+      Name: !Sub "${AWS::StackName}EndpointURL"
+  StaticDistribution:
+    Value: !GetAtt [StaticResourcesCDN, DomainName]
+    Export:
+      Name: !Sub "${AWS::StackName}StaticURL"
+  BeanstalkDistribution:
+    Value: !GetAtt [BeanstalkCDN, DomainName]
+    Export:
+      Name: !Sub "${AWS::StackName}BeanstalkURL"

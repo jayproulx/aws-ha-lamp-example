@@ -2,6 +2,9 @@
 tokens.json
 parameters.json
 
+# generated files
+exports.json
+
 # Node and NPM
 node_modules
 package-lock.json

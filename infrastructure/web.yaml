@@ -136,6 +136,7 @@ Resources:
     Properties:
       DistributionConfig:
         Comment: CDN for Elastic Beanstalk ELB
+        DefaultRootObject: index.php
         Logging:
           Bucket: !GetAtt [LogsBucket, DomainName]
           IncludeCookies: false
@@ -152,7 +153,6 @@ Resources:
           TargetOriginId: beanstalk-elb
           ForwardedValues:
             QueryString: 'false'
-        DefaultRootObject: index.html
         Origins:
           - Id: beanstalk-elb
             CustomOriginConfig:

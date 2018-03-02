@@ -1,11 +1,14 @@
 # aws-ha-lamp-example
 
 ## Goals
-- True high availability LAMP environment, duplication and failover for all services across multiple availability zones
+- True high availability LAMP environment, duplication and failover, and self healing for services across multiple availability zones
 - Lower latency and reduce load
 - Additional support for improved disk I/O
+- A MySQL database
+- Disaster Recovery (RDS Backups, S3 replication across availability zones, EBS snapshots if necessary)
 
-## notes:
+## Notes:
+- This demo, in it's most simple form, could simply be a Elastic Beanstalk app with the default functionality, however, it's meant to demonstrate given requirements
 - Any resources provisioned by these stacks may incur charges in your AWS account, steps have been taken to keep these low, and most services should fall within the free-tier.
 - In order to keep with free tier, the database stack will be launched as a db.t2.micro in a single availability zone rather than a Multi-AZ deployment, this compromises the availability, but keeps costs down for the example
 - These stacks already support multiple environments (Dev and Prod)
@@ -16,10 +19,11 @@
 - CloudFront will additionally reduce load on resources  
 - RDS connection info is passed through cloudformation template parameters, ideally these should be stored in SSM
 
-## instructions:
+## Instructions:
 
-- Create a new EC2 keypair called "aws-ha-lamp-example" in us-east-1 which will be used to connect to the instances via ssh if required
+- These instructions assume that you already have an AWS account, an IAM user with sufficient access, and have the AWS CLI installed and configured locally
 - Review the docs in ./infrastructure/README.md and deploy the CloudFormation stacks
+- Deploy the Elastic Beanstalk application following the documentation in ./web/README.md
 
 ## todo:
 
@@ -32,10 +36,12 @@
 - [x] Cross zone load balancing is disabled by default for the Elastic Beanstalk ELB, and would need to be enabled
 - [x] Update PHP application to display current local IP or instance id to distinguish between instances in demo
 - [x] Stretch goal: CodeBuild for CI/CD
+- [ ] S3 Default Encryption https://docs.aws.amazon.com/AmazonS3/latest/dev/bucket-encryption.html
+- [ ] RDS Resource encryption https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html (Not available for db.t2.micro free tier)
 - [ ] Demonstrate referencing an asset from the static distribution
 - [ ] Configure Elastic Beanstalk for HTTPS: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/configuring-https.html
 - [ ] (Deprecated since we're sticking to a single AZ to stay within free tier) Restrict Elastic Beanstalk Auto Scaling Group to 2 specific availability zones to match with MySQL
 - [ ] Ideally add additional ELB to EB environment in separate availability zone
 - [ ] Stretch goal: Add Elasticache and configure PHP for memcached cluster in 2 availability zones https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/customize-environment-resources-elasticache.html
-- [ ] Stretch goal: on EB startup add 2 RAID0 EBS volumes for higher disk I/O
+- [ ] Stretch goal: on EB startup add 2 RAID0 Encrypted EBS volumes for higher disk I/O
 - [ ] Stretch goal: RDS Parameters in SSM

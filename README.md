@@ -30,11 +30,12 @@
 - [x] Add CloudFront distribution in front of EB ELB, disable caching for demonstration of balancing (with HTTPS)
 - [x] Add minimum of 2 instances to Auto Scaling Group to demonstrate balancing
 - [x] Cross zone load balancing is disabled by default for the Elastic Beanstalk ELB, and would need to be enabled
+- [x] Update PHP application to display current local IP or instance id to distinguish between instances in demo
+- [x] Stretch goal: CodeBuild for CI/CD
+- [ ] Demonstrate referencing an asset from the static distribution
 - [ ] Configure Elastic Beanstalk for HTTPS: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/configuring-https.html
 - [ ] (Deprecated since we're sticking to a single AZ to stay within free tier) Restrict Elastic Beanstalk Auto Scaling Group to 2 specific availability zones to match with MySQL
-- [ ] Update PHP application to display current local IP or instance id to distinguish between instances in demo
 - [ ] Ideally add additional ELB to EB environment in separate availability zone
 - [ ] Stretch goal: Add Elasticache and configure PHP for memcached cluster in 2 availability zones https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/customize-environment-resources-elasticache.html
 - [ ] Stretch goal: on EB startup add 2 RAID0 EBS volumes for higher disk I/O
-- [x] Stretch goal: CodeBuild for CI/CD
 - [ ] Stretch goal: RDS Parameters in SSM

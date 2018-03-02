@@ -167,7 +167,6 @@ Resources:
     Properties:
       DistributionConfig:
         Comment: CDN for Elastic Beanstalk ELB
-        DefaultRootObject: index.php
         Logging:
           Bucket: !GetAtt [LogsBucket, DomainName]
           IncludeCookies: false

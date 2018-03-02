@@ -28,6 +28,7 @@ $app->match('/', function () use ($app) {
     return $app['twig']->render('index.twig', array(
         'title'    => 'Your Thoughts',
         'thoughts' => $thoughts,
+        'instance' => file_get_contents("http://169.254.169.254/latest/meta-data/instance-id")
     ));
 });
 

@@ -82,6 +82,61 @@ Options:
   -t, --template     CloudFormation template body          [default: "dns.yaml"]
 ```
 
+## Continuous Integration Stack
+
+```
+Manage the CI/CD Stack.
+Usage: cicd.ts
+
+Options:
+  --version          Show version number                               [boolean]
+  --parameters       Parameters file                [default: "parameters.json"]
+  -H, --help         Print usage and quit.                             [boolean]
+  -a, --action       CloudFormation action                   [default: "update"]
+  -s, --stackName    CloudFormation Stack Name                 [default: "CICD"]
+  -e, --environment  Environment to deploy stack to            [default: "Prod"]
+  -w, --wait         Wait for operations to complete before returning. [boolean]
+  -t, --template     CloudFormation template body         [default: "cicd.yaml"]
+```
+
+## Database Stack
+
+```
+Manage the Database Stack.
+Usage: db.ts
+
+Options:
+  --version           Show version number                              [boolean]
+  --parameters        Parameters file               [default: "parameters.json"]
+  --databasePassword  Database Password                            [default: ""]
+  -H, --help          Print usage and quit.                            [boolean]
+  -a, --action        CloudFormation action                  [default: "update"]
+  -s, --stackName     CloudFormation Stack Name                  [default: "DB"]
+  -e, --environment   Environment to deploy stack to           [default: "Prod"]
+  -w, --wait          Wait for operations to complete before returning.[boolean]
+  -t, --template      CloudFormation template body          [default: "db.yaml"]
+```
+
+## Exports Utility
+
+```
+Export CloudFormation parameters in a format appropriate for consuming in the
+web application.
+Usage: exports.js
+
+Options:
+  --version      Show version number                                   [boolean]
+  --appName      Name of the application from the parameters, used with
+                 environment to find exports specific to this application.
+                                                                      [required]
+  --environment  Environment to deploy stack to
+                                      [choices: "Dev", "Prod"] [default: "Prod"]
+  -H, --help     Print usage and quit.                                 [boolean]
+  -o, --output   Output file in json format          [default: "./exports.json"]
+  -d, --dump     Dump to console, don't write to a file.               [boolean]
+  -p, --pretty   Format the output with tabs                           [boolean]
+```
+
 ## Example
 
 ```bash
@@ -93,4 +148,10 @@ Options:
 # ./db.ts --action create
 # echo "Once this stack is created, you can now use the Elastic Beanstalk CLI to deploy your application"
 # ./web.ts --action create
+# echo "Deploy the php beanstalk sample" 
+# cd ../web; eb deploy; cd ../infrastructure
+# echo "Optionally install the CICD stack"
+# ./cicd.ts --action create
+# echo "Optionally update Route53 with aliases for the cloudfront distributions"
+# ./dns.ts --action create
 ```

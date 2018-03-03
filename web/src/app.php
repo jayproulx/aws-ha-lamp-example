@@ -43,7 +43,6 @@ $app->match('/', function () use ($app, $s3Client) {
     try {
         $fetched = $s3Client->listObjectsV2(['Bucket' => ASSET_BUCKET]);
         $assets = $fetched['Contents'];
-        $assetURL = explode("?", $fetched['@metadata']['effectiveUri'])[0];
     } catch (AwsException $awse) {
         echo "<pre>" . $awse . "</pre>";
     } catch (CredentialsException $ce) {
@@ -57,7 +56,7 @@ $app->match('/', function () use ($app, $s3Client) {
         'thoughts' => $thoughts,
         'instance' => file_get_contents("http://169.254.169.254/latest/meta-data/instance-id"),
         'assets' => $assets,
-        'assetURL' => $assetURL
+        'assetURL' => ASSET_URL
     ));
 });
 

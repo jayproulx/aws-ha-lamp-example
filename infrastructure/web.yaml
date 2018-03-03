@@ -74,34 +74,34 @@ Resources:
       Properties:
         CloudFrontOriginAccessIdentityConfig:
           Comment: Identity for StaticResourcesCDN
-#  StaticResourcesCDN:
-#    Type: AWS::CloudFront::Distribution
-#    DependsOn: [StaticResources, LogsBucket, StaticOriginAccessIdentity]
-#    Properties:
-#      DistributionConfig:
-#        Comment: CDN for Static website assets
-#        Logging:
-#          Bucket: !GetAtt [LogsBucket, DomainName]
-#          IncludeCookies: false
-#          Prefix: StaticResourcesCDN
-#        Enabled: 'true'
-#        Aliases:
-#          - Fn::ImportValue: !Sub "${AppName}${Environment}ACMStaticDomain"
-#        ViewerCertificate:
-#          AcmCertificateArn:
-#            Fn::ImportValue: !Sub "${AppName}${Environment}ACMCertificate"
-#          SslSupportMethod: "sni-only"
-#        DefaultCacheBehavior:
-#          ViewerProtocolPolicy: redirect-to-https
-#          TargetOriginId: static-resources
-#          ForwardedValues:
-#            QueryString: 'false'
-#        DefaultRootObject: index.html
-#        Origins:
-#          - Id: static-resources
-#            S3OriginConfig:
-#              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${StaticOriginAccessIdentity}"
-#            DomainName: !GetAtt [StaticResources, DomainName]
+  StaticResourcesCDN:
+    Type: AWS::CloudFront::Distribution
+    DependsOn: [StaticResources, LogsBucket, StaticOriginAccessIdentity]
+    Properties:
+      DistributionConfig:
+        Comment: CDN for Static website assets
+        Logging:
+          Bucket: !GetAtt [LogsBucket, DomainName]
+          IncludeCookies: false
+          Prefix: StaticResourcesCDN
+        Enabled: 'true'
+        Aliases:
+          - Fn::ImportValue: !Sub "${AppName}${Environment}ACMStaticDomain"
+        ViewerCertificate:
+          AcmCertificateArn:
+            Fn::ImportValue: !Sub "${AppName}${Environment}ACMCertificate"
+          SslSupportMethod: "sni-only"
+        DefaultCacheBehavior:
+          ViewerProtocolPolicy: redirect-to-https
+          TargetOriginId: static-resources
+          ForwardedValues:
+            QueryString: 'false'
+        DefaultRootObject: index.html
+        Origins:
+          - Id: static-resources
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${StaticOriginAccessIdentity}"
+            DomainName: !GetAtt [StaticResources, DomainName]
   BeanstalkApplication:
     Type: "AWS::ElasticBeanstalk::Application"
     Properties:
@@ -151,7 +151,7 @@ Resources:
         - Namespace: "aws:elasticbeanstalk:application:environment"
           OptionName: "ASSET_URL"
           Value:
-            Fn::ImportValue: !Sub "${AppName}${Environment}ACMStaticDomain"
+            Fn::ImportValue: !Sub "${AppName}${Environment}ACMStaticURL"
         - Namespace: "aws:autoscaling:launchconfiguration"
           OptionName: "IamInstanceProfile"
           Value: !Ref BeanstalkInstanceProfile
@@ -195,50 +195,50 @@ Resources:
       ApplicationName: !Ref BeanstalkApplication
       TemplateName: !Ref BeanstalkConfigurationTemplate
       Description: "AWS Elastic Beanstalk Environment"
-#  BeanstalkCDN:
-#    Type: AWS::CloudFront::Distribution
-#    DependsOn: [BeanstalkEnvironment, LogsBucket]
-#    Properties:
-#      DistributionConfig:
-#        Comment: CDN for Elastic Beanstalk ELB
-#        Logging:
-#          Bucket: !GetAtt [LogsBucket, DomainName]
-#          IncludeCookies: false
-#          Prefix: WebsiteCDN
-#        Enabled: 'true'
-#        Aliases:
-#          - Fn::ImportValue: !Sub "${AppName}${Environment}ACMWebsiteDomain"
-#        ViewerCertificate:
-#          AcmCertificateArn:
-#            Fn::ImportValue: !Sub "${AppName}${Environment}ACMCertificate"
-#          SslSupportMethod: "sni-only"
-#        DefaultCacheBehavior:
-#          AllowedMethods: [HEAD, DELETE, POST, GET, OPTIONS, PUT, PATCH]
-#          ViewerProtocolPolicy: redirect-to-https
-#          TargetOriginId: beanstalk-elb
-#          ForwardedValues:
-#            QueryString: 'true'
-#            Headers:
-#              - "*"
-#            Cookies:
-#              Forward: all
-#        Origins:
-#          - Id: beanstalk-elb
-#            CustomOriginConfig:
-#              HTTPPort: '80'
-#              HTTPSPort: '443'
-#              OriginProtocolPolicy: http-only
-#            DomainName: !GetAtt [BeanstalkEnvironment, EndpointURL]
+  BeanstalkCDN:
+    Type: AWS::CloudFront::Distribution
+    DependsOn: [BeanstalkEnvironment, LogsBucket]
+    Properties:
+      DistributionConfig:
+        Comment: CDN for Elastic Beanstalk ELB
+        Enabled: 'true'
+        Logging:
+          Bucket: !GetAtt [LogsBucket, DomainName]
+          IncludeCookies: false
+          Prefix: WebsiteCDN
+        Aliases:
+          - Fn::ImportValue: !Sub "${AppName}${Environment}ACMWebsiteDomain"
+        ViewerCertificate:
+          AcmCertificateArn:
+            Fn::ImportValue: !Sub "${AppName}${Environment}ACMCertificate"
+          SslSupportMethod: "sni-only"
+        DefaultCacheBehavior:
+          AllowedMethods: [HEAD, DELETE, POST, GET, OPTIONS, PUT, PATCH]
+          ViewerProtocolPolicy: redirect-to-https
+          TargetOriginId: beanstalk-elb
+          ForwardedValues:
+            QueryString: 'true'
+            Headers:
+              - "*"
+            Cookies:
+              Forward: all
+        Origins:
+          - Id: beanstalk-elb
+            CustomOriginConfig:
+              HTTPPort: '80'
+              HTTPSPort: '443'
+              OriginProtocolPolicy: http-only
+            DomainName: !GetAtt [BeanstalkEnvironment, EndpointURL]
 Outputs:
   BeanstalkEndpointURL:
     Value: !GetAtt [BeanstalkEnvironment, EndpointURL]
     Export:
       Name: !Sub "${AWS::StackName}EndpointURL"
-#  StaticDistribution:
-#    Value: !GetAtt [StaticResourcesCDN, DomainName]
-#    Export:
-#      Name: !Sub "${AWS::StackName}StaticURL"
-#  BeanstalkDistribution:
-#    Value: !GetAtt [BeanstalkCDN, DomainName]
-#    Export:
-#      Name: !Sub "${AWS::StackName}BeanstalkURL"
+  StaticDistribution:
+    Value: !GetAtt [StaticResourcesCDN, DomainName]
+    Export:
+      Name: !Sub "${AWS::StackName}StaticURL"
+  BeanstalkDistribution:
+    Value: !GetAtt [BeanstalkCDN, DomainName]
+    Export:
+      Name: !Sub "${AWS::StackName}BeanstalkURL"

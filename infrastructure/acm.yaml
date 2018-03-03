@@ -48,11 +48,21 @@ Outputs:
       Name: !Sub "${AWS::StackName}Certificate"
   WebsiteDomain:
     Value: !Sub ['${WebsiteSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, Suffix]}]
-    Description: The domain of the production website
+    Description: The domain of the website
     Export:
       Name: !Sub "${AWS::StackName}WebsiteDomain"
+  WebsiteURL:
+    Value: !Sub ['https://${WebsiteSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, Suffix]}]
+    Description: The URL of the website
+    Export:
+      Name: !Sub "${AWS::StackName}WebsiteURL"
   StaticDomain:
     Value: !Sub ['${StaticSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, Suffix]}]
-    Description: The domain of the production static assets
+    Description: The domain of the static assets
     Export:
       Name: !Sub "${AWS::StackName}StaticDomain"
+  StaticURL:
+    Value: !Sub ['https://${StaticSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, Suffix]}]
+    Description: The URL of the static assets
+    Export:
+      Name: !Sub "${AWS::StackName}StaticURL"

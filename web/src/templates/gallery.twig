@@ -10,7 +10,7 @@
 	<div class="row">
 		{%  for asset in assets %}
 			<div class="span4">
-				<img src="{{ assetURL }}{{ asset.Key }}" class="img-rounded" width="100%">
+				<img src="{{ assetURL }}/{{ asset.Key }}" class="img-rounded" width="100%">
 			</div>
 
 			{% if loop.index is divisibleby(3) %}

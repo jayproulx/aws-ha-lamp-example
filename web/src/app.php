@@ -1,11 +1,35 @@
 <?php
 
+ini_set('display_errors', 'On');
+error_reporting(E_ALL);
+
 require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/db-connect.php';
 
 use Silex\Application;
 use Silex\Provider\TwigServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
+
+//use Aws\S3\S3Client;
+//use Aws\Exception\AwsException;
+//use Aws\Exception\CredentialsException;
+//
+////Create a S3Client
+//$s3Client = new S3Client([
+//    'region' => 'us-east-1',
+//    'version' => '2006-03-01'//,
+////    'debug' => true
+//]);
+
+$assets = [];
+
+try {
+    $assets = $s3Client->listObjects(array('Bucket' => ASSET_BUCKET));
+}catch (CredentialsException $e) {
+    echo "<pre>"; var_dump($e); echo "</pre>";
+}
+
+
 
 // Setup the application
 $app = new Application();
@@ -21,14 +45,15 @@ $app['db'] = $app->share(function ($app) {
 });
 
 // Handle the index page
-$app->match('/', function () use ($app) {
+$app->match('/', function () use ($app, $assets) {
     $query = $app['db']->prepare("SELECT message, author FROM {$app['db.table']}");
     $thoughts = $query->execute() ? $query->fetchAll(PDO::FETCH_ASSOC) : array();
 
     return $app['twig']->render('index.twig', array(
         'title'    => 'Your Thoughts',
         'thoughts' => $thoughts,
-        'instance' => file_get_contents("http://169.254.169.254/latest/meta-data/instance-id")
+        'instance' => file_get_contents("http://169.254.169.254/latest/meta-data/instance-id"),
+        'assets'   => $assets
     ));
 });
 

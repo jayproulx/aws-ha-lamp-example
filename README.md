@@ -34,9 +34,10 @@
 - [x] Add CloudFront distribution in front of EB ELB, disable caching for demonstration of balancing (with HTTPS)
 - [x] Add minimum of 2 instances to Auto Scaling Group to demonstrate balancing
 - [x] Cross zone load balancing is disabled by default for the Elastic Beanstalk ELB, and would need to be enabled
+- [x] Switched to Application Load Balancer which has cross zone enabled by default.
 - [x] Update PHP application to display current local IP or instance id to distinguish between instances in demo
 - [x] Stretch goal: CodeBuild for CI/CD
-- [ ] S3 Default Encryption https://docs.aws.amazon.com/AmazonS3/latest/dev/bucket-encryption.html
+- [x] S3 Default Encryption https://docs.aws.amazon.com/AmazonS3/latest/dev/bucket-encryption.html
 - [ ] RDS Resource encryption https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html (Not available for db.t2.micro free tier)
 - [ ] Demonstrate referencing an asset from the static distribution
 - [ ] Configure Elastic Beanstalk for HTTPS: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/configuring-https.html

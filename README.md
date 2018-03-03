@@ -39,8 +39,11 @@
 - [x] Stretch goal: CodeBuild for CI/CD
 - [x] S3 Default Encryption https://docs.aws.amazon.com/AmazonS3/latest/dev/bucket-encryption.html
 - [x] Demonstrate referencing an asset from the static distribution
-- [ ] RDS Resource encryption https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html (Not available for db.t2.micro free tier)
 - [ ] Configure Elastic Beanstalk for HTTPS: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/configuring-https.html
+- [ ] Document how to update the gallery
+- [ ] Add high level architectural diagram to main README
+- [ ] Review and clean up documentation
+- [ ] RDS Resource encryption https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html (Not available for db.t2.micro free tier)
 - [ ] (Deprecated since we're sticking to a single AZ to stay within free tier) Restrict Elastic Beanstalk Auto Scaling Group to 2 specific availability zones to match with MySQL
 - [ ] Stretch goal: Add Elasticache and configure PHP for memcached cluster in 2 availability zones https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/customize-environment-resources-elasticache.html
 - [ ] Stretch goal: on EB startup add 2 RAID0 Encrypted EBS volumes for higher disk I/O

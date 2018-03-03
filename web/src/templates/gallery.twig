@@ -1,15 +1,15 @@
 <p>Sample images from: https://www.pexels.com/search/education/ served from {{ assetURL }}</p>
 
 <style>
-	.gallery .row {
-		margin-top: 10px;
+	.gallery .gallery-image {
+		margin-bottom: 20px;
 	}
 </style>
 
 <div class="gallery">
 	<div class="row">
 		{%  for asset in assets %}
-			<div class="span4">
+			<div class="span4 gallery-image">
 				<img src="{{ assetURL }}/{{ asset.Key }}" class="img-rounded" width="100%">
 			</div>
 

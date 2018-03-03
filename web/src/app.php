@@ -9,27 +9,16 @@ require __DIR__ . '/db-connect.php';
 use Silex\Application;
 use Silex\Provider\TwigServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
+use Aws\S3\S3Client;
+use Aws\Exception\AwsException;
+use Aws\Exception\CredentialsException;
 
-//use Aws\S3\S3Client;
-//use Aws\Exception\AwsException;
-//use Aws\Exception\CredentialsException;
-//
-////Create a S3Client
-//$s3Client = new S3Client([
-//    'region' => 'us-east-1',
-//    'version' => '2006-03-01'//,
-////    'debug' => true
-//]);
-
-$assets = [];
-
-try {
-    $assets = $s3Client->listObjects(array('Bucket' => ASSET_BUCKET));
-}catch (CredentialsException $e) {
-    echo "<pre>"; var_dump($e); echo "</pre>";
-}
-
-
+//Create a S3Client
+$s3Client = new S3Client([
+    'region' => 'us-east-1',
+    'version' => '2006-03-01'//,
+//    'debug' => true
+]);
 
 // Setup the application
 $app = new Application();
@@ -45,15 +34,30 @@ $app['db'] = $app->share(function ($app) {
 });
 
 // Handle the index page
-$app->match('/', function () use ($app, $assets) {
+$app->match('/', function () use ($app, $s3Client) {
     $query = $app['db']->prepare("SELECT message, author FROM {$app['db.table']}");
     $thoughts = $query->execute() ? $query->fetchAll(PDO::FETCH_ASSOC) : array();
+    $assets = [];
+    $assetURL = "";
+
+    try {
+        $fetched = $s3Client->listObjectsV2(['Bucket' => ASSET_BUCKET]);
+        $assets = $fetched['Contents'];
+        $assetURL = explode("?", $fetched['@metadata']['effectiveUri'])[0];
+    } catch (AwsException $awse) {
+        echo "<pre>" . $awse . "</pre>";
+    } catch (CredentialsException $ce) {
+        echo "<pre>";
+        var_dump($ce);
+        echo "</pre>";
+    }
 
     return $app['twig']->render('index.twig', array(
-        'title'    => 'Your Thoughts',
+        'title' => 'Your Thoughts',
         'thoughts' => $thoughts,
         'instance' => file_get_contents("http://169.254.169.254/latest/meta-data/instance-id"),
-        'assets'   => $assets
+        'assets' => $assets,
+        'assetURL' => $assetURL
     ));
 });
 
@@ -72,7 +76,7 @@ $app->match('/add', function (Request $request) use ($app) {
                 $query = $app['db']->prepare($sql);
                 $data = array(
                     ':message' => $message,
-                    ':author'  => $author,
+                    ':author' => $author,
                 );
                 if (!$query->execute($data)) {
                     throw new \RuntimeException('Saving your thought to the database failed.');

@@ -1,7 +1,7 @@
 [
   {
     "ParameterKey": "AppName",
-    "ParameterValue": "MyApplication"
+    "ParameterValue": "HALAMPExample"
   },
   {
     "ParameterKey": "Environment",
@@ -24,12 +24,20 @@
     "ParameterValue": "example.com"
   },
   {
+    "ParameterKey": "WebsiteSubdomain",
+    "ParameterValue": "lampexample"
+  },
+  {
+    "ParameterKey": "StaticSubdomain",
+    "ParameterValue": "lampstatic"
+  },
+  {
     "ParameterKey": "CertificateArn",
     "ParameterValue": "arn:aws:acm:<REGION>:<ACCT_ID>:certificate/<CERT_ID>"
   },
   {
     "ParameterKey": "RDSUsername",
-    "ParameterValue": "someusername"
+    "ParameterValue": "dbadmin"
   },
   {
     "ParameterKey": "RDSPassword",

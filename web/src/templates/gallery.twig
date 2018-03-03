@@ -1,5 +1,22 @@
-<p>Sample images from: https://www.pexels.com/search/education/</p>
+<p>Sample images from: https://www.pexels.com/search/education/ served from {{ assetURL }}</p>
 
-{%  for asset in assets %}
-	{{ asset.Key }}
-{%  endfor %}
+<style>
+	.gallery .row {
+		margin-top: 10px;
+	}
+</style>
+
+<div class="gallery">
+	<div class="row">
+		{%  for asset in assets %}
+			<div class="span4">
+				<img src="{{ assetURL }}{{ asset.Key }}" class="img-rounded" width="100%">
+			</div>
+
+			{% if loop.index is divisibleby(3) %}
+				</div>
+				<div class="row">
+			{% endif %}
+		{% endfor %}
+	</div>
+</div>

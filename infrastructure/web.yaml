@@ -44,36 +44,46 @@ Mappings:
 Resources:
   LogsBucket:
     Type: AWS::S3::Bucket
-  LogsBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref LogsBucket
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Action:
-              - "s3:PutObject"
-            Resource:
-              Fn::Sub: ["${arn}/*", {arn: !GetAtt [LogsBucket, Arn]}]
-            Principal:
-              AWS: !FindInMap [AWSELBAccountId, !Ref "AWS::Region", Account]
   StaticResources:
     Type: AWS::S3::Bucket
-    Properties:
-      AccessControl: PublicRead
-      WebsiteConfiguration:
-        IndexDocument: index.html
 # Example bucket encryption:
 #      BucketEncryption:
 #        ServerSideEncryptionConfiguration:
 #          - ServerSideEncryptionByDefault:
 #              SSEAlgorithm: aws:kms
   StaticOriginAccessIdentity:
-      Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
-      Properties:
-        CloudFrontOriginAccessIdentityConfig:
-          Comment: Identity for requests to StaticResources
+    Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: Identity for requests to StaticResources
+  LogsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    DependsOn: [StaticOriginAccessIdentity, LogsBucket]
+    Properties:
+      Bucket: !Ref LogsBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "s3:PutObject"
+            Resource:
+              Fn::Sub: ["${arn}/*", {arn: !GetAtt [LogsBucket, Arn]}]
+            Principal:
+              AWS: !FindInMap [AWSELBAccountId, !Ref "AWS::Region", Account]
+  StaticResourcesPolicy:
+    Type: AWS::S3::BucketPolicy
+    DependsOn: [StaticOriginAccessIdentity, StaticResources]
+    Properties:
+      Bucket: !Ref StaticResources
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "s3:GetObject"
+            Resource:
+              Fn::Sub: ["${arn}/*", {arn: !GetAtt [StaticResources, Arn]}]
+            Principal:
+              CanonicalUser: !GetAtt [StaticOriginAccessIdentity, S3CanonicalUserId]
   BeanstalkApplication:
     Type: "AWS::ElasticBeanstalk::Application"
     Properties:
@@ -81,7 +91,7 @@ Resources:
       Description: "AWS Elastic Beanstalk PHP Sample Application"
   BeanstalkConfigurationTemplate:
     Type: "AWS::ElasticBeanstalk::ConfigurationTemplate"
-    DependsOn: [BeanstalkApplication]
+    DependsOn: [BeanstalkApplication, BeanstalkInstanceProfile]
     Properties:
       Description: !Sub "${AppName} ${Environment} Configuration Template"
       ApplicationName: !Ref BeanstalkApplication
@@ -140,6 +150,7 @@ Resources:
 #          Value: "80"
   BeanstalkPolicy:
     Type: AWS::IAM::Policy
+    DependsOn: [StaticResources]
     Properties:
       Roles:
         - "aws-elasticbeanstalk-ec2-role"
@@ -168,7 +179,7 @@ Resources:
       Description: "AWS Elastic Beanstalk Environment"
   BeanstalkCDN:
     Type: AWS::CloudFront::Distribution
-    DependsOn: [BeanstalkEnvironment, LogsBucket]
+    DependsOn: [BeanstalkEnvironment, LogsBucket, StaticResources]
     Properties:
       DistributionConfig:
         Comment: CDN for Elastic Beanstalk ELB

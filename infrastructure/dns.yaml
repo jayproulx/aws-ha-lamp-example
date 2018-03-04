@@ -45,10 +45,3 @@ Resources:
             HostedZoneId: !FindInMap [AWSHostedZones, !Ref "AWS::Region", 'CloudFront']
             DNSName:
               Fn::ImportValue: !Sub "${AppName}${Environment}WebBeanstalkURL"
-        - Name:
-            Fn::ImportValue: !Sub "${AppName}${Environment}ACMStaticDomain"
-          Type: A
-          AliasTarget:
-            HostedZoneId: !FindInMap [AWSHostedZones, !Ref "AWS::Region", 'CloudFront']
-            DNSName:
-              Fn::ImportValue: !Sub "${AppName}${Environment}WebStaticURL"

@@ -38,11 +38,19 @@ $app->match('/', function () use ($app, $s3Client) {
     $query = $app['db']->prepare("SELECT message, author FROM {$app['db.table']}");
     $thoughts = $query->execute() ? $query->fetchAll(PDO::FETCH_ASSOC) : array();
     $assets = [];
-    $assetURL = "";
 
     try {
-        $fetched = $s3Client->listObjectsV2(['Bucket' => ASSET_BUCKET]);
-        $assets = $fetched['Contents'];
+        $fetched = $s3Client->listObjectsV2([
+            'Bucket' => ASSET_BUCKET,
+            'Prefix' => ASSET_PREFIX
+        ]);
+
+        // remove entries that end in /, we only want objects not folders
+        foreach( $fetched['Contents'] as $asset ) {
+            if(preg_match("/[^\/]$/", $asset['Key'])) {
+                array_push($assets, $asset);
+            }
+        }
     } catch (AwsException $awse) {
         echo "<pre>" . $awse . "</pre>";
     } catch (CredentialsException $ce) {
@@ -56,7 +64,7 @@ $app->match('/', function () use ($app, $s3Client) {
         'thoughts' => $thoughts,
         'instance' => file_get_contents("http://169.254.169.254/latest/meta-data/instance-id"),
         'assets' => $assets,
-        'assetURL' => ASSET_URL
+        'assetPrefix' => ASSET_PREFIX
     ));
 });
 

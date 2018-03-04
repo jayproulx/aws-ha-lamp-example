@@ -4,6 +4,6 @@
   define('DB_PASSWORD', $_SERVER['RDS_PASSWORD']);
   define('DB_HOST', $_SERVER['RDS_HOSTNAME']);
   define('ASSET_BUCKET', $_SERVER['ASSET_BUCKET']);
-  define('ASSET_URL', $_SERVER['ASSET_URL']);
+  define('ASSET_PREFIX', $_SERVER['ASSET_PREFIX']);
   define('DB_TABLE', 'urler');
 ?>

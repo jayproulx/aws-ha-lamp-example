@@ -1,4 +1,4 @@
-<p>Sample images from: https://www.pexels.com/search/education/ served from {{ assetURL }}</p>
+<p>Sample images from: https://www.pexels.com/search/education/ served from multi-origin CloudFront configuration via {{ assetPrefix }}</p>
 
 <style>
 	.gallery .gallery-image {
@@ -9,14 +9,14 @@
 <div class="gallery">
 	<div class="row">
 		{%  for asset in assets %}
-			<div class="span4 gallery-image">
-				<img src="{{ assetURL }}/{{ asset.Key }}" class="img-rounded" width="100%">
-			</div>
+            <div class="span4 gallery-image">
+                <img src="/{{ asset.Key }}" class="img-rounded" width="100%">
+            </div>
 
-			{% if loop.index is divisibleby(3) %}
-				</div>
-				<div class="row">
-			{% endif %}
+            {% if loop.index is divisibleby(3) %}
+                </div>
+                <div class="row">
+            {% endif %}
 		{% endfor %}
 	</div>
 </div>

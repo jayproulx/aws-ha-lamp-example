@@ -39,6 +39,7 @@
 - [x] Stretch goal: CodeBuild for CI/CD
 - [x] S3 Default Encryption https://docs.aws.amazon.com/AmazonS3/latest/dev/bucket-encryption.html
 - [x] Demonstrate referencing an asset from the static distribution
+- [x] Remove StaticResourcesCDN in favour of multi-origin CloudFront, makes web requests to S3 easier when it's from the same domain
 - [ ] Configure Elastic Beanstalk for HTTPS: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/configuring-https.html
 - [ ] Document how to update the gallery
 - [ ] Add high level architectural diagram to main README

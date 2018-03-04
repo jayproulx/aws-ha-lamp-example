@@ -28,10 +28,6 @@
     "ParameterValue": "lampexample"
   },
   {
-    "ParameterKey": "StaticSubdomain",
-    "ParameterValue": "lampstatic"
-  },
-  {
     "ParameterKey": "CertificateArn",
     "ParameterValue": "arn:aws:acm:<REGION>:<ACCT_ID>:certificate/<CERT_ID>"
   },

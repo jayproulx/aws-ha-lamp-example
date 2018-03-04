@@ -73,35 +73,7 @@ Resources:
       Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
       Properties:
         CloudFrontOriginAccessIdentityConfig:
-          Comment: Identity for StaticResourcesCDN
-  StaticResourcesCDN:
-    Type: AWS::CloudFront::Distribution
-    DependsOn: [StaticResources, LogsBucket, StaticOriginAccessIdentity]
-    Properties:
-      DistributionConfig:
-        Comment: CDN for Static website assets
-        Logging:
-          Bucket: !GetAtt [LogsBucket, DomainName]
-          IncludeCookies: false
-          Prefix: StaticResourcesCDN
-        Enabled: 'true'
-        Aliases:
-          - Fn::ImportValue: !Sub "${AppName}${Environment}ACMStaticDomain"
-        ViewerCertificate:
-          AcmCertificateArn:
-            Fn::ImportValue: !Sub "${AppName}${Environment}ACMCertificate"
-          SslSupportMethod: "sni-only"
-        DefaultCacheBehavior:
-          ViewerProtocolPolicy: redirect-to-https
-          TargetOriginId: static-resources
-          ForwardedValues:
-            QueryString: 'false'
-        DefaultRootObject: index.html
-        Origins:
-          - Id: static-resources
-            S3OriginConfig:
-              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${StaticOriginAccessIdentity}"
-            DomainName: !GetAtt [StaticResources, DomainName]
+          Comment: Identity for requests to StaticResources
   BeanstalkApplication:
     Type: "AWS::ElasticBeanstalk::Application"
     Properties:
@@ -149,9 +121,8 @@ Resources:
           OptionName: "ASSET_BUCKET"
           Value: !Ref StaticResources
         - Namespace: "aws:elasticbeanstalk:application:environment"
-          OptionName: "ASSET_URL"
-          Value:
-            Fn::ImportValue: !Sub "${AppName}${Environment}ACMStaticURL"
+          OptionName: "ASSET_PREFIX"
+          Value: "cdn"
         - Namespace: "aws:autoscaling:launchconfiguration"
           OptionName: "IamInstanceProfile"
           Value: !Ref BeanstalkInstanceProfile
@@ -222,6 +193,22 @@ Resources:
               - "*"
             Cookies:
               Forward: all
+        CacheBehaviors:
+          - PathPattern: "*.css"
+            ViewerProtocolPolicy: redirect-to-https
+            TargetOriginId: beanstalk-elb
+            ForwardedValues:
+              QueryString: 'false'
+          - PathPattern: "*.js"
+            ViewerProtocolPolicy: redirect-to-https
+            TargetOriginId: beanstalk-elb
+            ForwardedValues:
+              QueryString: 'false'
+          - PathPattern: "cdn/*"
+            ViewerProtocolPolicy: redirect-to-https
+            TargetOriginId: static-resources
+            ForwardedValues:
+              QueryString: 'false'
         Origins:
           - Id: beanstalk-elb
             CustomOriginConfig:
@@ -229,15 +216,15 @@ Resources:
               HTTPSPort: '443'
               OriginProtocolPolicy: http-only
             DomainName: !GetAtt [BeanstalkEnvironment, EndpointURL]
+          - Id: static-resources
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${StaticOriginAccessIdentity}"
+            DomainName: !GetAtt [StaticResources, DomainName]
 Outputs:
   BeanstalkEndpointURL:
     Value: !GetAtt [BeanstalkEnvironment, EndpointURL]
     Export:
       Name: !Sub "${AWS::StackName}EndpointURL"
-  StaticDistribution:
-    Value: !GetAtt [StaticResourcesCDN, DomainName]
-    Export:
-      Name: !Sub "${AWS::StackName}StaticURL"
   BeanstalkDistribution:
     Value: !GetAtt [BeanstalkCDN, DomainName]
     Export:

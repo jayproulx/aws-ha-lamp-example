@@ -23,9 +23,6 @@ Parameters:
   WebsiteSubdomain:
     Type: String
     Default: "www"
-  StaticSubdomain:
-    Type: String
-    Default: "static"
 Mappings:
   SubDomain:
     Prod:
@@ -38,8 +35,6 @@ Resources:
     DeletionPolicy: Retain
     Properties:
       DomainName: !Sub ['${WebsiteSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, Suffix]}]
-      SubjectAlternativeNames:
-        - !Sub ['${StaticSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, Suffix]}]
 Outputs:
   Certificate:
     Value: !Ref Certificate
@@ -56,13 +51,3 @@ Outputs:
     Description: The URL of the website
     Export:
       Name: !Sub "${AWS::StackName}WebsiteURL"
-  StaticDomain:
-    Value: !Sub ['${StaticSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, Suffix]}]
-    Description: The domain of the static assets
-    Export:
-      Name: !Sub "${AWS::StackName}StaticDomain"
-  StaticURL:
-    Value: !Sub ['https://${StaticSubdomain}${sub}.${Domain}', { sub: !FindInMap [SubDomain, !Ref Environment, Suffix]}]
-    Description: The URL of the static assets
-    Export:
-      Name: !Sub "${AWS::StackName}StaticURL"
